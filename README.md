@@ -1,1 +1,6 @@
-# bikesharetorontodec2021
+# Open Data Toronto - Bike Share Toronto Ridership December 2021
+# Overview of the report
+This report uses data collected by Bike Share Toronto to log the usage of the service throughout the city. Datasets are collected based on months of usage, and not throughout a fiscal year, creating some limitations, but this segregation can be helpful in investigating the division of resources and understanding how to alter service during off-peak seasons, like December. Results show that certain stations see less pickup traffic, which can be an indication that these lower-use stations are located in areas that cater a population that require the service less, such as office spaces, etc. The collected information can be informative to the Bike share service, as it can use processed data to understand the movement of their bikes, and gauge out the typical flow of the service, helping them optimize when bikes may need to be moved from one station to another to cater to the demand. 
+
+# Notes on file structure
+'Inputs' contain other papers referenced, raw data files etc. 'Outputs' contain the final knitted file, and files used to create this file. 'Scripts' contain the data for importing and processing the data. 
