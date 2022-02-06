@@ -1,0 +1,117 @@
+---
+title: "Investigation of Toronto Bike Share service in December 2021"
+author: "Sampson Zhao"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: bookdown::pdf_document2
+subtitle: "Bike Share Toronto Ridership for December 2021"
+abstract: "This report uses data collected by Bike Share Toronto to log the usage of the service throughout the city. Datasets are collected based on months of usage, and not throughout a fiscal year, creating some limitations, but this segregation can be helpful in investigating the division of resources and understanding how to alter service during off-peak seasons, like December. Results show that certain stations see less pickup traffic, which can be an indication that these lower-use stations are located in areas that cater a population that require the service less, such as office spaces, etc. The collected information can be informative to the Bike share service, as it can use processed data to understand the movement of their bikes, and gauge out the typical flow of the service, helping them optimize when bikes may need to be moved from one station to another to cater to the demand."
+thanks: "Code and data are available at: [https://github.com/senpaiz477/opendatatoronto-bikeshare-dec2021](https://github.com/senpaiz477/opendatatoronto-bikeshare-dec2021)."
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#### Setup workspace ####
+# install.packages("opendatatoronto")
+# install.packages("tidyverse")
+# install.packages("ggplot2")
+# install.packages("knitr")
+# install.packages("here")
+# install.packages("kableExtra") 
+
+library(tidyverse)
+library(opendatatoronto)
+library(ggplot2)
+library(knitr)
+library(here)
+library(kableExtra)
+```
+
+# Introduction
+Bike Share Toronto is a municipally managed bike sharing program that provides short term bike rentals to users to do short trips around Toronto. There are 625 stations around the city for users to pick up a bike either through a one-time use pass or an annual pass. Depending on the type of pass purchased by the user, rides usually last around 30-45 minutes, with varying fees after the allotted time. Users of the Annual pass are allowed unlimited 30 minute rides. Bike Share Toronto released it's ridership data as a form of sharing the overall usage and usability of their service, and ultimately striving to increase the public interest in data relating to government related programs.
+
+This data has been shared since 2014, when the Bike Share Toronto system was transferred from a private company to the Toronto Parking Authority, which lead to the further expansion of their system, which increased the accessibility of their services overall in the city. Overall, a general decrease in the use of this system by non-pass holders (i.e. non-annual pass users) has been seen as the service has now been considered a part of the common mode of public transportation[@kalinowski_2014], as this was their goal back in 2014. 
+
+This report will discuss the granularity of the data, looking at the importance of the how the data is collected. Then we would look at how this data can be used in the allocation of labor and finally we can talk about the implication of how this data can be used in the form of expansion. 
+
+# Data
+This analysis for this project uses the R programing language [@citeR], and the R-Studio Integrated development environment [@citeRStudio]. The Tidyverse package was used for manipulation of the datasets [@citetidyverse]. the Here package was used to locate files produced from R scripts [@citehere]. The data was retrieved from Open Data Toronto through the opendatatoronto package [@citeODT]. lubridate package is used to format time and dates[@citelubridate], KableExtra package was used to enchance the overall appearance of tables[@citeKable].
+
+
+```{r, include = FALSE}
+
+# Import data that was collected from 01-data_gathering.R and then cleaned using
+# 02-data_clean.R
+filtered_data <- readr::read_csv(here::here("inputs/data/filtered_data.csv"))
+start_selected_data <- readr::read_csv(here::here("inputs/data/start_selected_data.csv"))
+end_selected_data <- readr::read_csv(here::here("inputs/data/end_selected_data.csv"))
+
+
+```
+
+The data that is collected for the Bike Share Toronto was created and shared by the Toronto Parking Authority, which is then hosted on the Open Data Toronto (ODT) portal. This allows for free public access to different data sets relating to data collected by the City of Toronto. The Bike Share Toronto data has been collected ever since the beginning of the service in 2011, when the service was owned by BIXI Toronto [@tse_2011]. The previously collected usage data was not shared by the private company, but when it was acquired by the City of Toronto under the Toronto Parking Authority after the company went bankrupt, this data was not shared in its full capacity through Open Data Toronto, leading to the lack of information before 2014. Since then, the Bike Share Toronto has expanded their services and updated their system to allow them to share all of the trip data anonymously, through ODT.
+
+The data is formatted as the following:
+
+* Trip ID: 
+  + Unique for every trip, used for cross-referencing data between start and end stations
+* Trip Duration: 
+  + Summarized data from start and end time in seconds.
+* Start and End Station ID: 
+  + Unique for every station for determining travel time between start and end stations, as well as other cross-referencing data points. 
+* Start and End Time: 
+  + Formatted in MM/DD/YYYY HH:MM
+* Start and End Station Name: 
+  + actual location of the station, formatted as either the address or the intersection.
+* Bike ID: 
+  + Unique to each bike, may be used to track relative use of bike to keep track of wear and tear of the bike. Can be useful for managing the repair of bikes, when a certain level of use is achieved. 
+* User Type: 
+  + defined as either a casual user (Pay per use either single trips, 24 or 72 Hour Passes) or a Annual User (Pay for access for a year, limiting each trip to 30 or 45 minutes.)
+
+When we consider the format of the data, the first thing that came into concern, was the validity of their statement of the data being completely anonymous, as most of the identifying information was removed before the data was shared on ODT. But it is still a concern that there is some factor of tracking, as there were specific and unique Trip IDs that were shared in the data, making this information less then secure in terms of anonymity. One such concern is if there was a data breach of the centalized data, where information of annual pass user's and their past usage information would be leaked, this information can then be cross-referenced with other past trip data, creating a profile for people to use to track these user's based on their routines. The biggest issue here is less so related to how this data can be manipulated to aid crimes like stalking. So there is a concern, ethically, where the trip ID information can be a point of entry when considering the anonymity of the users. 
+
+In this report, due to the expansive amount of stations in Toronto (around 625 within the downtown core), the data was trimmed into looking at a subset of the data, but this may cause bias in the data, if data was chosen by hand. As such, a random number generator was used to generate 6 different station IDs, to be used as a uncontrolled variable, and these numbers were obtained from random.org [@haahr_2019]. In theory, The utilization of a pseudo-random number generator ensures that the numbers generated in succession have no common variable between them, allowing for the values that were chosen to not be influenced by the user or other readers, and removing a source of bias. Though this may be one area that can be controlled, other factors like the skewing of the data set itself are uncontrolled bias, As the surrounding area of each station is highly dependent on the particular area of Toronto, certain groups of stations may see significiantly higher proportions of usage, due to the immediate surroundings of the station. Figure \@ref(fig:usagefrequency) represents all of the ridership data of bikes being pickup from stations, and we can see that there are select few stations that have significantly higher station use, as they are typically closer to residential areas and university buildings. 
+
+The data also shows certain stations with close to no traffic. Figure 
+ 
+Based on these
+```{r leastuse, fig.cap = "Least used stations in December 2021", echo = FALSE, message = FALSE, warning = FALSE}
+
+total_count <-
+  filtered_data |>
+  count(Start.Station.Id, sort = TRUE)
+
+total_count |>
+  slice(610:615)|>
+  knitr::kable(caption = "Top 6 Least used Starting stations of Bike Share Toronto in December 2021",
+               col.names = c("Starting Station ID","Number of Users"), booktabs = TRUE, linesep = "")
+total_count|>
+  slice(1:6)|>
+  knitr::kable(caption = "Top 6 Most used Starting stations of Bike Share Toronto in December 2021",
+               col.names = c("Starting Station ID","Number of Users"), booktabs = TRUE, linesep = "")
+
+```
+
+
+```{r usagefrequency, fig.cap="Overall Usage of Bike Share Toronto in December 2021", echo = FALSE, message = FALSE, warning = FALSE}
+filtered_data |>
+  ggplot(mapping = aes(x = factor(Start.Station.Id))) +
+  geom_bar()+
+  labs(title = 'Number of Users overall in December 2021',
+       x = 'Starting Station', y = 'Number of Riders')
+```
+
+BikeShare Toronto is a municipally managed bike sharing program that provides short term bike rentals to users to do short trips around Toronto. There are 625 stations around the city for users to pick up a bike either through a one-time use pass or an annual pass. Depending on the type of pass purchased by the user, rides usually last around 30-45 minutes, with varying fees after the allotted time. Users of the Annual pass are allowed unlimited 30 minute rides. Here we obtained data from the first 6 bikeshare stations in Toronto, during the month of December 2021.
+
+Open Data Toronto shares this information through their website https://open.toronto.ca/. We downloaded the data, then cleaned the dataset using R and R Studio.
+
+We found that the density of the area around particular stations have more riderships, even during the month of December, as seen by the higher density in the area of the station was highly related to the number of rides seen at those areas, such as the St. George Station, where there is a high density of residence buildings, where as closer to King St. West Station is mainly composed of corporate offices and Mall Spaces.
+
+These findings can support the focusing of the placement of the bikes, as higher density areas will more commonly run out of rental bikes during peak hours, hence by looking at the higher number of riderships at particular stations, predictions can be made to supplement peak hours, and moving bikes from lower density areas to higher density areas will help with the supply and demand of the bikes on a ridership level. This variable can also help with the prediction of construction and removal of stations, as this may help decide the popularity of the stations, as well as the usage, which will help decide whether a new station near by would be beneficial to the area.
+
+
+\newpage
+
+# References
+
+
