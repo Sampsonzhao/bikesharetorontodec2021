@@ -4,8 +4,8 @@ author: "Sampson Zhao"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output: bookdown::pdf_document2
 subtitle: "Bike Share Toronto Ridership for December 2021"
-abstract: "This report uses data collected by Bike Share Toronto to log the usage of the service throughout the city. Datasets are collected based on months of usage, and not throughout a fiscal year, creating some limitations, but this segregation can be helpful in investigating the division of resources and understanding how to alter service during off-peak seasons, like December. Results show that certain stations see less pickup traffic, which can be an indication that these lower-use stations are located in areas that cater a population that require the service less, such as office spaces, etc. The collected information can be informative to the Bike share service, as it can use processed data to understand the movement of their bikes, and gauge out the typical flow of the service, helping them optimize when bikes may need to be moved from one station to another to cater to the demand."
-thanks: "Code and data are available at: [https://github.com/senpaiz477/opendatatoronto-bikeshare-dec2021](https://github.com/senpaiz477/opendatatoronto-bikeshare-dec2021)."
+abstract: "This report uses data collected by Bike Share Toronto to log the usage of the service throughout the city. This information can be  helpful in investigating the division of resources and understanding how to alter service during off-peak seasons, like December. Results show that certain stations see less pickup traffic due to their surrounding areas,  which can be an indication that these lower-use stations are located in areas that cater a population that require the service less, such as office spaces or highly residental based neighorhoods.In contrast, high foot traffic areas with dense population, like near the University of Toronto and Hospitals, see increased use. The collected information can be informative to the Bike share service, as it can use processed data to understand the movement of their bikes, and gauge out the typical flow of the service, helping them optimize when bikes may need to be moved from one station to another to cater to the demand."
+thanks: "Code and data are available at: [https://github.com/Sampsonzhao/bikesharetorontodec2021](https://github.com/Sampsonzhao/bikesharetorontodec2021)."
 bibliography: references.bib
 ---
 
@@ -18,6 +18,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # install.packages("knitr")
 # install.packages("here")
 # install.packages("kableExtra") 
+# install.packages('reshape2')
+# install.packages("haven")
 
 library(tidyverse)
 library(opendatatoronto)
@@ -25,6 +27,7 @@ library(ggplot2)
 library(knitr)
 library(here)
 library(kableExtra)
+library(reshape2)
 ```
 
 # Introduction
@@ -32,10 +35,11 @@ Bike Share Toronto is a municipally managed bike sharing program that provides s
 
 This data has been shared since 2014, when the Bike Share Toronto system was transferred from a private company to the Toronto Parking Authority, which lead to the further expansion of their system, which increased the accessibility of their services overall in the city. Overall, a general decrease in the use of this system by non-pass holders (i.e. non-annual pass users) has been seen as the service has now been considered a part of the common mode of public transportation[@kalinowski_2014], as this was their goal back in 2014. 
 
-This report will discuss the granularity of the data, looking at the importance of the how the data is collected. Then we would look at how this data can be used in the allocation of labor and finally we can talk about the implication of how this data can be used in the form of expansion. 
+This report will discuss the granularity of the data, looking at the collection of this data. It will then address the concerns with privacy of information, as information uniquely tied to users were shared in the data set. We can then look into processing the data, while trimming the data to understand the overall usage of the Bike rental system, by randomly selecting a percentage of the stations and looking at the usage of the station.Finally, we would look at how this data can be used in the allocation of labor and talk about the implication of how this data can be used in the form of expansion. 
 
 # Data
-This analysis for this project uses the R programing language [@citeR], and the R-Studio Integrated development environment [@citeRStudio]. The Tidyverse package was used for manipulation of the datasets [@citetidyverse]. the Here package was used to locate files produced from R scripts [@citehere]. The data was retrieved from Open Data Toronto through the opendatatoronto package [@citeODT]. lubridate package is used to format time and dates[@citelubridate], KableExtra package was used to enchance the overall appearance of tables[@citeKable].
+## Acknowledgement
+This analysis for this project uses the 'R' programming language [@citeR], and the 'R-Studio' Integrated development environment [@citeRStudio]. The 'Tidyverse' package was used for manipulation of the datasets [@citetidyverse]. The 'Here' package was used to locate files produced from R scripts [@citehere]. The data was retrieved from Open Data Toronto through the 'opendatatoronto' package [@citeODT]. 'lubridate' package is used to format time and dates[@citelubridate], 'KableExtra' package was used to enhance the overall appearance of tables[@citeKable]. 'knitr' was used to tie all of the information on this document into one digestible PDF [@citeknitr1, @citeknitr2, @citeknitr3]. 'ggplot2' was used to create the bar plots in this document. 'reshape2' was used to modify and combine dataframes for the construction of the bar plots [@citereshape].
 
 
 ```{r, include = FALSE}
@@ -49,6 +53,8 @@ end_selected_data <- readr::read_csv(here::here("inputs/data/end_selected_data.c
 
 ```
 
+
+## Where this data comes from
 The data that is collected for the Bike Share Toronto was created and shared by the Toronto Parking Authority, which is then hosted on the Open Data Toronto (ODT) portal. This allows for free public access to different data sets relating to data collected by the City of Toronto. The Bike Share Toronto data has been collected ever since the beginning of the service in 2011, when the service was owned by BIXI Toronto [@tse_2011]. The previously collected usage data was not shared by the private company, but when it was acquired by the City of Toronto under the Toronto Parking Authority after the company went bankrupt, this data was not shared in its full capacity through Open Data Toronto, leading to the lack of information before 2014. Since then, the Bike Share Toronto has expanded their services and updated their system to allow them to share all of the trip data anonymously, through ODT.
 
 The data is formatted as the following:
@@ -68,31 +74,10 @@ The data is formatted as the following:
 * User Type: 
   + defined as either a casual user (Pay per use either single trips, 24 or 72 Hour Passes) or a Annual User (Pay for access for a year, limiting each trip to 30 or 45 minutes.)
 
+## Concerns
 When we consider the format of the data, the first thing that came into concern, was the validity of their statement of the data being completely anonymous, as most of the identifying information was removed before the data was shared on ODT. But it is still a concern that there is some factor of tracking, as there were specific and unique Trip IDs that were shared in the data, making this information less then secure in terms of anonymity. One such concern is if there was a data breach of the centalized data, where information of annual pass user's and their past usage information would be leaked, this information can then be cross-referenced with other past trip data, creating a profile for people to use to track these user's based on their routines. The biggest issue here is less so related to how this data can be manipulated to aid crimes like stalking. So there is a concern, ethically, where the trip ID information can be a point of entry when considering the anonymity of the users. 
 
-In this report, due to the expansive amount of stations in Toronto (around 625 within the downtown core), the data was trimmed into looking at a subset of the data, but this may cause bias in the data, if data was chosen by hand. As such, a random number generator was used to generate 6 different station IDs, to be used as a uncontrolled variable, and these numbers were obtained from random.org [@haahr_2019]. In theory, The utilization of a pseudo-random number generator ensures that the numbers generated in succession have no common variable between them, allowing for the values that were chosen to not be influenced by the user or other readers, and removing a source of bias. Though this may be one area that can be controlled, other factors like the skewing of the data set itself are uncontrolled bias, As the surrounding area of each station is highly dependent on the particular area of Toronto, certain groups of stations may see significiantly higher proportions of usage, due to the immediate surroundings of the station. Figure \@ref(fig:usagefrequency) represents all of the ridership data of bikes being pickup from stations, and we can see that there are select few stations that have significantly higher station use, as they are typically closer to residential areas and university buildings. 
-
-The data also shows certain stations with close to no traffic. Figure 
- 
-Based on these
-```{r leastuse, fig.cap = "Least used stations in December 2021", echo = FALSE, message = FALSE, warning = FALSE}
-
-total_count <-
-  filtered_data |>
-  count(Start.Station.Id, sort = TRUE)
-
-total_count |>
-  slice(610:615)|>
-  knitr::kable(caption = "Top 6 Least used Starting stations of Bike Share Toronto in December 2021",
-               col.names = c("Starting Station ID","Number of Users"), booktabs = TRUE, linesep = "")
-total_count|>
-  slice(1:6)|>
-  knitr::kable(caption = "Top 6 Most used Starting stations of Bike Share Toronto in December 2021",
-               col.names = c("Starting Station ID","Number of Users"), booktabs = TRUE, linesep = "")
-
-```
-
-
+## Data Selection
 ```{r usagefrequency, fig.cap="Overall Usage of Bike Share Toronto in December 2021", echo = FALSE, message = FALSE, warning = FALSE}
 filtered_data |>
   ggplot(mapping = aes(x = factor(Start.Station.Id))) +
@@ -101,13 +86,110 @@ filtered_data |>
        x = 'Starting Station', y = 'Number of Riders')
 ```
 
-BikeShare Toronto is a municipally managed bike sharing program that provides short term bike rentals to users to do short trips around Toronto. There are 625 stations around the city for users to pick up a bike either through a one-time use pass or an annual pass. Depending on the type of pass purchased by the user, rides usually last around 30-45 minutes, with varying fees after the allotted time. Users of the Annual pass are allowed unlimited 30 minute rides. Here we obtained data from the first 6 bikeshare stations in Toronto, during the month of December 2021.
+In this report, due to the expansive amount of stations in Toronto (around 625 within the downtown core), the data was trimmed into looking at a subset of the data, but this may cause bias in the data, if data was chosen by hand. As such, a random number generator was used to generate 6 different station IDs, to be used as a uncontrolled variable, and these numbers were obtained from random.org [@haahr_2019]. The number of stations was chosen as it represented 1% of all the stations in Toronto, and allowed for a breadth of representation of the data set. In theory, The utilization of a pseudo-random number generator ensures that the numbers generated in succession have no common variable between them, allowing for the values that were chosen to not be influenced by the user or other readers, and removing a source of bias [@haahr_2019]. Though this may be one area that can be controlled, other factors like the skewing of the data set itself are uncontrolled bias. As the surrounding area of each station is highly dependent on the particular area of Toronto, certain groups of stations may see significantly higher proportions of usage, due to the immediate surroundings of the station. Figure \@ref(fig:usagefrequency) represents all of the ridership data of bikes being pickup from stations, and we can see that there are select few stations that have significantly higher station use, as they are typically closer to residential areas and university buildings. 
+ 
+\newpage
 
-Open Data Toronto shares this information through their website https://open.toronto.ca/. We downloaded the data, then cleaned the dataset using R and R Studio.
+## Factors that affect the data
+The data also shows certain stations with close to no traffic. Tables \@ref(tab:leastuse) and \@ref(tab:mostuse) shows the disparity between the two types of stations. Understanding that the data set represents an off-peak season, where there is only a small subset of people who would be using Bike Share service as their mode of transportation, it is within reason that some stations, like the ones represented in Table \@ref(tab:leastuse) have little to no pick-up usage. Other factors like the weather and construction may have physically prevented users from accessing the station to pick up or drop off the rented bikes.There are other factors that can explain why some stations may be seeing increased traffic as well. For example, stations nearby may be physically impeded or were unavailable, causing users to visit other stations, thus leading to increased traffic to these stations. The number of factors that can affect the use of a particular station is multifactorial, resulting in the possibility of the data being skewed. 
 
-We found that the density of the area around particular stations have more riderships, even during the month of December, as seen by the higher density in the area of the station was highly related to the number of rides seen at those areas, such as the St. George Station, where there is a high density of residence buildings, where as closer to King St. West Station is mainly composed of corporate offices and Mall Spaces.
+```{r leastuse, fig.cap = "Least used stations in December 2021", echo = FALSE, message = FALSE, warning = FALSE}
 
-These findings can support the focusing of the placement of the bikes, as higher density areas will more commonly run out of rental bikes during peak hours, hence by looking at the higher number of riderships at particular stations, predictions can be made to supplement peak hours, and moving bikes from lower density areas to higher density areas will help with the supply and demand of the bikes on a ridership level. This variable can also help with the prediction of construction and removal of stations, as this may help decide the popularity of the stations, as well as the usage, which will help decide whether a new station near by would be beneficial to the area.
+### Chart Formatting cod was found here: https://stackoverflow.com/questions/53153537/rmarkdown-setting-the-position-of-kable
+
+total_count_start <-
+  filtered_data |>
+  count(Start.Station.Id, sort = TRUE)
+
+total_count_start |>
+  slice(610:615)|>
+  knitr::kable(caption = "Top 6 Least used Starting stations of Bike Share Toronto in December 2021",
+               col.names = c("Starting Station ID","Number of Users"), booktabs = TRUE, linesep = "")%>%
+  kable_styling(latex_options = "HOLD_position")
+
+```
+```{r mostuse, fig.cap = "Most used stations in December 2021", echo = FALSE, message = FALSE, warning = FALSE}
+
+total_count <-
+  filtered_data |>
+  count(Start.Station.Id, sort = TRUE)
+
+total_count|>
+  slice(1:6)|>
+  knitr::kable(caption = "Top 6 Most used Starting stations of Bike Share Toronto in December 2021",
+               col.names = c("Starting Station ID","Number of Users"), booktabs = TRUE, linesep = "")%>%
+  kable_styling(latex_options = "HOLD_position")
+
+```
+\newpage
+
+## Comparing activities between stations
+As mentioned before, 6 random station IDs were chosen as a subset to approximate the relative activity that each station would see. 
+The following 6 stations were randomly generated and is represented by Figure \@ref(fig:map) and \@ref(fig:6stations):
+
+* 7107 - Cherry St / Distillery Ln
+* 7249 - Dovercourt Rd / Harrison St (Green P) - SMART
+* 7293 - College St / McCaul St
+* 7338 - Logan Ave / Bain Ave
+* 7428 - Woodbine Ave / Lake Shore Blvd E
+* 7662 - Beaty Ave / Queen St W
+
+```{r map, fig.cap="Map of 6 Randomly Chosen Locations", echo = FALSE, message = FALSE, warning = FALSE, fig.pos="H", fig.height=4.5}
+
+# stock photo retrieved from: https://stock.adobe.com/ca/search?k=city+of+toronto+map&asset_id=281616544
+knitr::include_graphics(here::here('inputs/data/cityoftoronto_stations.png'))
+```
+
+In the case of Figure \@ref(fig:6stations), we can see that there are parts of the two extremes that were mentioned in Section \@ref(data-selection) and \@ref(factors-that-affect-the-data) are seen in this set of stations. While each station have similar pick-up and drop-off events at each station, there are discrepancies in terms of the higher traffic station located at College st. and McCaul St. This is most likely due to the area that this station is located, as it is located next to the University of Toronto, a junior public school as well as Mt. Sinai Hospital, this station would see more traffic due to the area having buildings with high foot traffic (the university and the public school), as well as workplaces (the hospital). As well this station is surrounded by an residential area, as well as recreational spaces, ultimately resulting in the immediate area around the station to be high in overall foot traffic.
+If we also take a look at the lowest scoring station, located at Woodbine Ave and Lake Shore Blvd, we can see that this area is mostly residential, with a beach park next to the station, resulting in less people who may be interested in renting a bike for use, As well there are multiple stations located nearby, as well as being closer to the main entrances of Woodbine Park, and other high traffic buildings, which may explain the lack of usage compared to the other stations. 
+This trend of residential areas and low foot traffic amenities next to low-usage stations are seen throughout the entire data set, as these areas seem to have less of a need for these rental bikes. These stations are also located a bit further from the central part of Downtown Toronto, where the population is most dense, which may also play a factor in less users in those parts of the city. At the same time, high-usage stations are located near high foot traffic buildings like the University of Toronto, Public schools, hospitals, and other similar buildings, hence leading to the need for people to travel to and from that particular station, when going to and from work. 
+
+[Google Maps](https://www.google.ca/maps)
+
+```{r 6stations, fig.cap="Overall Usage of Bike Share Toronto in December 2021", echo = FALSE, message = FALSE, warning = FALSE}
+count_data_start <-
+  start_selected_data|>
+  count(Start.Station.Id, name = 'Start.Station')
+
+count_data_start <-
+  count_data_start |>
+  rename(Station.ID=Start.Station.Id)
+
+count_data_end <-
+  end_selected_data |>
+  count(End.Station.Id, name = 'End.Station')
+
+count_data_end <-
+  count_data_end |>
+  rename(Station.ID=End.Station.Id)
+
+count_data <-
+  merge(count_data_start, count_data_end, by = 'Station.ID')
+
+rm(count_data_start,count_data_end)
+
+### following code was found here: https://stackoverflow.com/questions/42820677/ggplot-bar-plot-side-by-side-using-two-variables
+
+count_data_2 <- melt(count_data, id.vars='Station.ID')
+count_data_2 |>
+  ggplot(mapping = aes(x = factor(Station.ID), y = value, fill = variable)) + 
+  geom_bar(stat='identity', position='dodge')+
+  labs(title = 'Number of Users at 6 Random End Stations in December 2021',
+       x = 'Station ID', y = 'Number of Riders') +
+  scale_fill_discrete(name = "Ridership Activity",labels = c("Pickup", "Dropoff"))
+```
+
+# Discussion
+## How can this information be helpful
+In areas with the increased foot traffic and significantly more ridership can be a sign of the station being used regularly enough that the station may end up with no bikes at the station. This may result in the supply of rental bikes not satisfying the demand for these bikes at those particular stations. As a result some people may choose to ignore the service when there are a lack of bikes during those peak usage times. Take for example February 6th, 2022 at 9:50PM, as live station information is shared on [Google Maps](https://www.google.ca/maps). We can see that even during the evening of a weekend that the station at this time only has 4/14 bikes available. This can be an indicator for the Bike Share Toronto staff to focus more on these high-usage stations, by understanding the on- and off-peak trends of these stations, and timing restocking of the rental bikes, from lower-traffic stations to higher-traffic stations. These can ensure that bikes available to users at any point of time, even at the high-usage stations. This information can also help modify station placements relating to lower-use stations. Depending on how little use a station may see during on- and off-peak months, this can help them identify which stations can be considered for removal, hence having less stations to service in low-usage settings. 
+
+## Data that wasn't used
+Within the data set, there are variables that are less used, due to the fact that the data itself is not looked into by the general public. In the case of this investigation, information related to the exact time and date that the trip was initiated, or the specific Trip ID of each trip, as well as the specific ID of the bikes themselves were not used, due that data variable could be used in another disucssion looking at traffic flow. Time and date information could be tracked over the frame of a day or a week to track on and off-peak hours for the particular station, or what days of the week have the most use. These data points could be an interesting continuation into looking at the overall movement of the bikes. As for data relating to particular bike IDs, that information can be used to track the wear-and-tear of specific bikes, and could be important factor to trace when the bike should be brought in for annual repairs, or even when bikes should be replaced. These sets of information can be helpful in the everyday monitoring of the assets of the company, but in the case of this investigation, this information would not be as useful into looking at the overall traffic and use of the system itself, not the specific use of a particular bike. As for the time element, because of this data is based off of an off-peak season, a majority of the stations don't see enough traffic to properly depict use over a day to represent which hours of the day are statistically busier then others. It should be a point of interest to look at On-peak seasons to investigate the on- and off-peak hours of the Service, be it the entire system or a particular station. 
+
+
+# Conclusion
+The findings from this paper ultimately can help Bike Share Toronto refocus some of the downfalls of this type of system, where stations are involved in the pickup and drop-off of rental bikes. There were other companies who took this weakness and improved on the bike rental system, for example, having electronic locks on the bikes themselves, and using an app interface to lock and unlock these bikes. Though those are future actions that Bike Share Toronto can have, for the mean time, understanding the flow of traffic in the 625 stations that they manage can optimize the amount of availability there is at higher traffic stations, while keeping ensuring that lower-traffic stations aren't overflowed with rental bikes. This system allows them to collect the necessary information that can help with not only the movement of bikes, but also future planning of station placement, where lower-use stations may be moved to other areas in the city, where either access is limited or not enough are available for use.
+
 
 
 \newpage
