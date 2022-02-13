@@ -80,7 +80,7 @@ When we consider the format of the data, the first thing that came into concern,
 ## Data Selection
 ```{r usagefrequency, fig.cap="Overall Usage of Bike Share Toronto in December 2021", echo = FALSE, message = FALSE, warning = FALSE}
 filtered_data |>
-  ggplot(mapping = aes(x = factor(Start.Station.Id))) +
+  ggplot(mapping = aes(x = Start.Station.Id)) +
   geom_bar()+
   labs(title = 'Number of Users overall in December 2021',
        x = 'Starting Station', y = 'Number of Riders')
